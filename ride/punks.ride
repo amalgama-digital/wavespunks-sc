@@ -1,0 +1,69 @@
+{-# STDLIB_VERSION 5 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+let maxSupply = 10000
+let wavesNeeded = 1
+
+func getPunkIDKey(id: String) = {
+  "punk_" + id
+}
+
+func tryGetInteger(key: String) = {
+  let val = match getInteger(this, key) {
+    case b:Int => b
+    case _ => 0
+  }
+  val
+}
+
+
+func tryGetString(key: String) = {
+  let val = match getString(this, key) {
+    case b:String => b
+    case _ => ""
+  }
+  val
+}
+
+@Callable(i)
+func mint() = {
+  let totalPunksSupply = tryGetInteger("punks_supply")
+  let availablePunks = tryGetString("available_punks")
+
+  let firstPayment = i.payments[0].value()
+
+  let firstPaymentBool = match (firstPayment.assetId) {
+      case t:ByteVector => false
+      case _ => true
+    }
+
+  if (totalPunksSupply == maxSupply) then {
+    throw("All punks are minted")
+  } else if (availablePunks == "") then {
+    throw("No punks available")
+  } else if (firstPaymentBool) then {
+    throw("Payment must be in Waves tokens only")
+  } else if (firstPayment.amount < wavesNeeded) then {
+    throw("Insufficient funds")
+  } else {
+    let listAvailablePunks = split(availablePunks, ",")
+
+    let rand = 0
+    let punkId = getElement(listAvailablePunks, rand)
+
+    let name = "WavesPunk #" + punkId
+
+    let asset = Issue(name, name, 1, 0, false, unit, 0)
+    let assetId = asset.calculateAssetId()
+    [
+      IntegerEntry("punks_supply", totalPunksSupply + 1),
+      StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
+      StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
+      StringEntry(assetId.toBase58String(), getPunkIDKey(punkId))
+    ]
+  }
+}
+
+@Verifier(tx)
+func verify() = sigVerify(tx.bodyBytes, tx.proofs[0], tx.senderPublicKey)
