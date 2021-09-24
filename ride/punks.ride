@@ -3,7 +3,6 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 let maxSupply = 10000
-let wavesNeeded = 1
 
 func getPunkIDKey(id: String) = {
   "punk_" + id
@@ -26,17 +25,23 @@ func tryGetString(key: String) = {
   val
 }
 
+func calcWavesNeeded(totalPunksSupply: Int) = {
+  1
+}
+
 @Callable(i)
 func mint() = {
   let totalPunksSupply = tryGetInteger("punks_supply")
   let availablePunks = tryGetString("available_punks")
 
+  let wavesNeeded = calcWavesNeeded(totalPunksSupply)
+
   let firstPayment = i.payments[0].value()
 
   let firstPaymentBool = match (firstPayment.assetId) {
-      case t:ByteVector => false
-      case _ => true
-    }
+    case t:ByteVector => true
+    case w:Unit => false
+  }
 
   if (totalPunksSupply == maxSupply) then {
     throw("All punks are minted")
