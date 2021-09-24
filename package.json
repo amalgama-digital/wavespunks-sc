@@ -1,0 +1,27 @@
+{
+  "name": "wavespunks-sc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "init": "tsc src/init.ts && node src/init.js",
+    "check-init": "tsc src/check_init.ts && node src/check_init.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amalgama-digital/wavespunks-sc.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/amalgama-digital/wavespunks-sc/issues"
+  },
+  "homepage": "https://github.com/amalgama-digital/wavespunks-sc#readme",
+  "devDependencies": {
+    "@waves/waves-transactions": "^4.2.1-beta.6",
+    "axios": "^0.21.4",
+    "typescript": "^4.4.3"
+  }
+}
