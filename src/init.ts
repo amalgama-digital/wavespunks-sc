@@ -12,7 +12,7 @@ async function init() {
             value: PUNKS,
         }],
         fee: 1000000,
-      }, SEED);
+    }, SEED);
     
     await broadcast(dataTx, API_BASE);
     await waitForTx(dataTx.id, { apiBase: API_BASE, timeout: TIMEOUT });
