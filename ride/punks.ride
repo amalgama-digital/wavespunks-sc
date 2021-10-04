@@ -2,7 +2,8 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
-let maxSupply = 10000
+let maxSupply = 1337
+let waves = 100000000
 
 func getPunkIDKey(id: String) = {
   "punk_" + id
@@ -26,7 +27,7 @@ func tryGetString(key: String) = {
 }
 
 func calcWavesNeeded(totalPunksSupply: Int) = {
-  1
+  waves
 }
 
 @Callable(i)
@@ -59,13 +60,15 @@ func mint() = {
 
     let name = "WavesPunk #" + punkId
 
-    let asset = Issue(name, name, 1, 0, false, unit, 0)
+    let asset = Issue(name, name, 1, 0, false, unit, height)
     let assetId = asset.calculateAssetId()
     [
       IntegerEntry("punks_supply", totalPunksSupply + 1),
       StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
+      asset,
       StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
-      StringEntry(assetId.toBase58String(), getPunkIDKey(punkId))
+      StringEntry(assetId.toBase58String(), getPunkIDKey(punkId)),
+      ScriptTransfer(i.caller, 1, assetId)
     ]
   }
 }
