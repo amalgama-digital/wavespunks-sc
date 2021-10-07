@@ -2,7 +2,7 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
-let maxSupply = 1337
+let maxSupply = 1000
 let waves = 100000000
 
 func getPunkIDKey(id: String) = {
@@ -29,7 +29,7 @@ func tryGetString(key: String) = {
 func tryGetAddress(addr: String) = {
   let val = match addressFromString(addr) {
     case a:Address => a
-    case a:Unit => this
+    case a:Unit => Address(base58'3Msrw9Kxa6RgHYQ63sSib9uESmaBU9gH6Gy')
   }
   val
 }
@@ -41,8 +41,8 @@ func getRandomNumber(variants: Int, txId: ByteVector, heightBlock: Int, offset: 
 }
 
 func calcWavesNeeded(totalPunksSupply: Int) = {
-  if (totalPunksSupply >= 1300) then {
-    waves * 20
+  if (totalPunksSupply == 0) then {
+    waves
   } else {
     ((totalPunksSupply / 100) + 1) * waves
   }
@@ -73,7 +73,7 @@ func mint(ref: String) = {
   } else {
     let listAvailablePunks = split(availablePunks, ",")
 
-    let rand = getRandomNumber(totalPunksSupply, i.transactionId, height, 0)
+    let rand = getRandomNumber(maxSupply - totalPunksSupply, i.transactionId, height, 0)
     let punkId = getElement(listAvailablePunks, rand)
 
     let name = "WavesPunk #" + punkId
