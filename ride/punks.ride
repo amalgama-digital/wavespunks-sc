@@ -26,12 +26,30 @@ func tryGetString(key: String) = {
   val
 }
 
+func tryGetAddress(addr: String) = {
+  let val = match addressFromString(addr) {
+    case a:Address => a
+    case a:Unit => this
+  }
+  val
+}
+
+func getRandomNumber(variants: Int, txId: ByteVector, heightBlock: Int, offset: Int) = {
+  let randomSeedBlock = blockInfoByHeight(heightBlock-1).value()
+  let randomHash = sha256_16Kb(txId + randomSeedBlock.vrf.value())
+  randomHash.toInt(offset) % variants
+}
+
 func calcWavesNeeded(totalPunksSupply: Int) = {
-  waves
+  if (totalPunksSupply >= 1300) then {
+    waves * 20
+  } else {
+    ((totalPunksSupply / 100) + 1) * waves
+  }
 }
 
 @Callable(i)
-func mint() = {
+func mint(ref: String) = {
   let totalPunksSupply = tryGetInteger("punks_supply")
   let availablePunks = tryGetString("available_punks")
 
@@ -55,20 +73,23 @@ func mint() = {
   } else {
     let listAvailablePunks = split(availablePunks, ",")
 
-    let rand = 0
+    let rand = getRandomNumber(totalPunksSupply, i.transactionId, height, 0)
     let punkId = getElement(listAvailablePunks, rand)
 
     let name = "WavesPunk #" + punkId
 
     let asset = Issue(name, name, 1, 0, false, unit, height)
     let assetId = asset.calculateAssetId()
+
+    let referalAddress = tryGetAddress(ref)
     [
       IntegerEntry("punks_supply", totalPunksSupply + 1),
       StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
       asset,
       StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
       StringEntry(assetId.toBase58String(), getPunkIDKey(punkId)),
-      ScriptTransfer(i.caller, 1, assetId)
+      ScriptTransfer(i.caller, 1, assetId),
+      ScriptTransfer(referalAddress, firstPayment.amount / 10, unit)
     ]
   }
 }
