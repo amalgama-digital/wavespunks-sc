@@ -42,7 +42,7 @@ func getTypePunk(id: String) = {
 }
 
 func getURL(id: String) = {
-  "https://wavespunks.com/punks/" + id + ".png"
+  "https://wavespunks.com/punks/p" + id + ".png"
 }
 
 func getRandomNumber(variants: Int, txId: ByteVector, heightBlock: Int, offset: Int) = {
