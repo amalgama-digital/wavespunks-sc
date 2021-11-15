@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "init": "tsc src/init.ts && node src/init.js",
-    "check-init": "tsc src/check_init.ts && node src/check_init.js"
+    "check-init": "tsc src/check_init.ts && node src/check_init.js",
+    "send": "tsc src/send.ts && node src/send.js"
   },
   "repository": {
     "type": "git",
