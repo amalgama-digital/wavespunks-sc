@@ -17,7 +17,6 @@ func tryGetInteger(key: String) = {
   val
 }
 
-
 func tryGetString(key: String) = {
   let val = match getString(this, key) {
     case b:String => b
@@ -32,6 +31,18 @@ func tryGetAddress(addr: String) = {
     case a:Unit => Address(base58'3Msrw9Kxa6RgHYQ63sSib9uESmaBU9gH6Gy')
   }
   val
+}
+
+func getTypePunk(id: String) = {
+  if (id != "0") then {
+    "unique"
+  } else {
+    "rare"
+  }
+}
+
+func getURL(id: String) = {
+  "https://wavespunks.com/punks/" + id + ".png"
 }
 
 func getRandomNumber(variants: Int, txId: ByteVector, heightBlock: Int, offset: Int) = {
@@ -77,8 +88,9 @@ func mint(ref: String) = {
     let punkId = getElement(listAvailablePunks, rand)
 
     let name = "WavesPunk #" + punkId
+    let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\"}"
 
-    let asset = Issue(name, name, 1, 0, false, unit, height)
+    let asset = Issue(name, meta, 1, 0, false, unit, height)
     let assetId = asset.calculateAssetId()
 
     let referalAddress = tryGetAddress(ref)
