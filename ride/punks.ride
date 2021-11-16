@@ -34,10 +34,17 @@ func tryGetAddress(addr: String) = {
 }
 
 func getTypePunk(id: String) = {
-  if (id != "0") then {
-    "unique"
-  } else {
+  let idINT = match parseInt(id) {
+    case i:Int => i
+    case i:Unit => 0
+  }
+
+  if (idINT == 0) then {
+    "ultra-rare"
+  } else if (idINT <= 40) then {
     "rare"
+  } else {
+    "unique"
   }
 }
 
