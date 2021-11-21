@@ -5,7 +5,7 @@ async function init() {
     const dataTx = transfer({
         chainId: CHAIN_ID,
         recipient: '3Msrw9Kxa6RgHYQ63sSib9uESmaBU9gH6Gy',
-        amount: 3000000000,
+        amount: 22000000000,
         fee: 1000000,
     }, SEED);
     
