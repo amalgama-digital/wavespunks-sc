@@ -28,7 +28,7 @@ func tryGetString(key: String) = {
 func tryGetAddress(addr: String) = {
   let val = match addressFromString(addr) {
     case a:Address => a
-    case a:Unit => Address(base58'3Msrw9Kxa6RgHYQ63sSib9uESmaBU9gH6Gy')
+    case a:Unit => Address(base58'3PQG1wqM5vECAGVzMDvBzyq5nSkriqnVFxs')
   }
   val
 }
