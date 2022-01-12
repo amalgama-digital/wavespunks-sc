@@ -3,7 +3,7 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 let maxSupply = 1000
-let waves = 100000000
+let waves = 300000000
 
 func getPunkIDKey(id: String) = {
   "punk_" + id
@@ -62,7 +62,7 @@ func calcWavesNeeded(totalPunksSupply: Int) = {
   if (totalPunksSupply == 0) then {
     waves
   } else {
-    ((totalPunksSupply / 100) + 1) * waves
+    ((totalPunksSupply / 200) + 1) * waves
   }
 }
 
@@ -94,7 +94,7 @@ func mint(ref: String) = {
     let rand = getRandomNumber(maxSupply - totalPunksSupply, i.transactionId, height, 0)
     let punkId = getElement(listAvailablePunks, rand)
 
-    let name = "WavesPunk #" + punkId
+    let name = "WavesZombiePunk #" + punkId
     let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\"}"
 
     let asset = Issue(name, meta, 1, 0, false, unit, height)
