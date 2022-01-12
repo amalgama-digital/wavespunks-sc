@@ -1,0 +1,134 @@
+{-# STDLIB_VERSION 5 #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+{-# CONTENT_TYPE DAPP #-}
+let eggsAssetId = base58'C1iWsKGqLwjHUndiQ7iXpdmPum9PeCDFfyXBdJJosDRS'
+
+let devAddress = base58'3P44yqcpfhPF2iC1nptm2ZJCTaN7VYhz9og'
+
+let eggsNeeded = (3 * 100000000)
+
+let artefactsLimit = (301 + 600)
+
+let artefacts = ["ART-XMISTL", "ART-XHAT", "ART-XSCARF", "ART-XSWEATER", "ART-XSOCK", "ART-XTREE"]
+
+func tryGetInteger (key: String) = {
+    let val = match getInteger(this, key) {
+        case a: Int => 
+            a
+        case _ => 
+            0
+    }
+    val
+}
+
+
+
+func getRandomNumber (variants: Int, txId: ByteVector, finishHeight: Int, offset: Int) = {
+    let randomSeedBlock = value(blockInfoByHeight((finishHeight - 1)))
+    let randomHash = sha256((txId + value(randomSeedBlock.vrf)))
+    (toInt(randomHash, (offset * 8)) % variants)
+}
+
+
+func getRandomArtefact (boxId: ByteVector, h: Int) = {
+    let randomNumber = getRandomNumber(6, boxId, h, 0)
+    artefacts[randomNumber]
+}
+
+
+@Callable(i)
+func preInit () = {
+    [
+        IntegerEntry("static_ART-LAKE_farmingSlots", 200),
+        IntegerEntry("static_ART-LAKE_farmingBoost", 2),
+        IntegerEntry("static_ART-HOUSE_farmingSlots", 4),
+        IntegerEntry("static_ART-HOUSE_farmingBoost", 30),
+        IntegerEntry("static_ART-BIGHOUSE_farmingSlots", 10),
+        IntegerEntry("static_ART-BIGHOUSE_farmingBoost", 15)
+    ]
+}
+
+
+@Callable(i)
+func issueArtefact (type: String, receiver: String) = {
+    if ((i.caller == this))
+    then {
+        let txIdStr = toBase58String(i.transactionId)
+        let address = Address(fromBase58String(receiver))
+        let artefact = Issue(type, "NFT artefact of Waves Ducks game. Drop #2.", 1, 0, false, unit, 0)
+        let artefactId = calculateAssetId(artefact)
+        [
+            artefact, 
+            StringEntry((("artefact_" + toBase58String(artefactId)) + "_type"), type), 
+            ScriptTransfer(address, 1, artefactId)
+        ]
+        }
+    else throw("admin only")
+}
+
+
+@Callable(i)
+func setLock (n: Int) = {
+    if ((i.caller == this))
+    then [IntegerEntry("global_locked", n)]
+    else throw("admin only")
+}
+
+
+@Callable(i)
+func buyArtefact () = {
+    if ((lastBlock.timestamp > 1639742400000))
+    then throw("There are no active sales now... ")
+    else if ((tryGetInteger("global_locked") > 0))
+        then throw("contract is temporarily locked")
+        else if ((tryGetInteger("global_artAmount") >= artefactsLimit))
+            then throw("SOLDOUT!!! Hurray!")
+            else if (if ((1639605600000 > lastBlock.timestamp))
+                then (i.caller != Address(devAddress))
+                else false)
+                then throw("Too early...")
+                else {
+                    let firstPayment = value(i.payments[0])
+                    if ((firstPayment.assetId != eggsAssetId))
+                        then throw(("You can attach only EGG tokens with the following asset id: " + toBase58String(eggsAssetId)))
+                        else if ((eggsNeeded > firstPayment.amount))
+                            then throw(("To hatch a duck you currently need the following amount of EGGlets: " + toString(eggsNeeded)))
+                            else [
+                                StringEntry((((toString(i.caller) + "_") + toBase58String(i.transactionId)) + "_status"), "started"),
+                                IntegerEntry((((toString(i.caller) + "_") + toBase58String(i.transactionId)) + "_finishHeight"), (height + 2)),
+                                IntegerEntry("global_artAmount", (tryGetInteger("global_artAmount") + 1))
+                            ]
+                    }
+}
+
+
+@Callable(i)
+func setGlobalArtAmount (newAmount: Int) = {
+    if (if ((i.caller == this))
+    then true
+    else (i.caller == Address(devAddress)))
+    then [IntegerEntry("global_artAmount", newAmount)]
+    else throw("Permission denied")
+}
+
+
+@Callable(i)
+func claimArtefact (boxIdStr: String) = {
+    let txId = fromBase58String(boxIdStr)
+    let statusKey = (((toString(i.caller) + "_") + boxIdStr) + "_status")
+    let heightKey = (((toString(i.caller) + "_") + boxIdStr) + "_finishHeight")
+    if ((getStringValue(statusKey) != "started"))
+        then throw("claimed already")
+        else if ((getIntegerValue(heightKey) > height))
+            then throw("you cannot claim yet")
+            else {
+                let artType = getRandomArtefact(txId, getIntegerValue(heightKey))
+                let asset = Issue(artType, "Artefact of Waves Ducks metaverse.", 1, 0, false, unit, getIntegerValue(heightKey))
+                let assetId = calculateAssetId(asset)
+[StringEntry(statusKey, artType), StringEntry((((toString(i.caller) + "_") + boxIdStr) + "_artefactId"), toBase58String(assetId)), StringEntry((toBase58String(assetId) + "_type"), artType), asset, ScriptTransfer(i.caller, 1, assetId)]
+                }
+    }
+
+
+@Verifier(tx)
+func verify () = sigVerify(tx.bodyBytes, tx.proofs[0], tx.senderPublicKey)
