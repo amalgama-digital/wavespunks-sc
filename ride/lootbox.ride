@@ -1,11 +1,6 @@
 {-# STDLIB_VERSION 5 #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 {-# CONTENT_TYPE DAPP #-}
-let eggsAssetId = base58'C1iWsKGqLwjHUndiQ7iXpdmPum9PeCDFfyXBdJJosDRS'
-
-let devAddress = base58'3P44yqcpfhPF2iC1nptm2ZJCTaN7VYhz9og'
-
-let eggsNeeded = (3 * 100000000)
 
 let artefactsLimit = 750
 
@@ -114,10 +109,12 @@ func claimArtefact () = {
     let txId = tryGetString(keyTransaction(toString(i.caller)))
     let statusKey = keyStatus(toString(i.caller))
     let heightKey = keyFinishHeight(toString(i.caller))
-    if ((getStringValue(statusKey) != statusDrop))
-        then throw("claimed already")
+    if((lastBlock.timestamp < timeEnd))
+    then throw("You cannot claim yet")
+    else if ((getStringValue(statusKey) != statusDrop))
+        then throw("Claimed already")
         else if ((getIntegerValue(heightKey) > height))
-            then throw("you cannot claim yet")
+            then throw("You cannot claim yet")
             else {
                 let artType = getRandomArtefact(fromBase58String(txId), getIntegerValue(heightKey))
                 let asset = Issue(artType, "Artefact of Waves Ducks metaverse.", 1, 0, false, unit, getIntegerValue(heightKey))
@@ -130,7 +127,7 @@ func claimArtefact () = {
                 ScriptTransfer(i.caller, 1, assetId)
                 ]
                 }
-    }
+}
 
 
 @Verifier(tx)
