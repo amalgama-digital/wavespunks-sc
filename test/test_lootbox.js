@@ -1,6 +1,3 @@
-const { address } = require("@waves/ts-lib-crypto");
-const { invokeScript } = require("@waves/waves-transactions");
-
 const wvs = 10 ** 8;
 
 describe('test lootbox script', async function () {
@@ -15,16 +12,25 @@ describe('test lootbox script', async function () {
         const script = compile(file('lootbox.ride'));
         const ssTx = setScript({script}, accounts.deploy);
         await broadcast(ssTx);
-        await waitForTx(ssTx.id)
-        console.log('Script has been set')
+        await waitForTx(ssTx.id);
+        console.log('Script has been set');
+        const startTime =  Date.now()-1000000;
+        const endTime =  Date.now()+10000;
         const initTx = invokeScript({
-            dApp: address(accounts.deploy),
-            call: {
-                function: "initTime",
-                args: [{type: "integer", value: Date.now},
-                        {type: "integer", value: Date.now + 10000}]
-            }
-        })
+            fee: 900000, 
+            dApp: address(accounts.deploy), 
+            call:{function:"initTime", 
+                args:[
+                    {
+                    type: "integer", 
+                    value: startTime
+                    },
+                    {
+                    type: "integer", 
+                    value: endTime
+                    }
+                ]}
+            }, accounts.deploy)
         await broadcast(initTx);
         await waitForTx(initTx.id)
         console.log('Init start and end time')
@@ -32,6 +38,39 @@ describe('test lootbox script', async function () {
     });
     
     it('Drop lootbox', async function () {
+        await setupAccounts({foo:10, bar: 20})
+        const initTx = invokeScript({
+            fee: 900000, 
+            dApp: address(accounts.deploy),
+            call: {
+                function: "dropLootbox",
+                args: [
+                    {
+                    type: "string",
+                    value: address(accounts.alice)
+                    }
+                ]
+            }
+        }, accounts.deploy)
+        await broadcast(initTx);
+        await waitForTx(initTx.id)
         
     })
+
+    it('Open lootbox', async function () {
+        await waitNBlocks(2)
+        const initTx = invokeScript({
+            dApp: address(accounts.deploy),
+            call: {
+                function: "claimLootbox",
+            },
+        }, accounts.alice)
+        
+        await broadcast(initTx);
+        await waitForTx(initTx.id)
+    })
+
+    
+
+    
 })

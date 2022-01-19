@@ -15,18 +15,18 @@ let timeEnd = "Time End Drop"
 let artefacts = ["SALE-DISCOUNT", 
                 "MERCH-TSHIRT",
                 "MERCH-HOODIE",
-                "MERCH-BASEBALLCAP",
-                "VACCINE-ASTROZOMBIKA",
-                "VACCINE-ZOMBIKV",
-                "VACCINE-ZOMBERNA",
+                "MERCH-CAP",
+                "VAC-ASTROZOMBIKA",
+                "VAC-ZOMBIKV",
+                "VAC-ZOMBERNA",
                 "ART-RESPIRATORS",
                 "ART-GASMASK",
                 "ART-HAZMATSUIT",
                 "ART-CROWBAR",
                 "ART-MACHETE",
-                "ART-NOTAFLAMETHROWERS",
+                "ART-FLAMETHROWER",
                 "ART-SHOTGUN",
-                "ART-PICKLEDBRAINS"
+                "ART-PICKLEDBRAIN"
                 ]
 
 func tryGetInteger (key: String) = {
@@ -99,7 +99,7 @@ func dropLootbox (address: String) = {
                         [
                             StringEntry(userStatusKey, statusDrop),
                             StringEntry(keyTransaction(address), toBase58String(i.transactionId)),
-                            IntegerEntry(keyFinishHeight(toString(i.caller)), height + 2),
+                            IntegerEntry(keyFinishHeight(address), height + 2),
                             IntegerEntry("count_lootbox", (tryGetInteger("count_lootbox") + 1))
                         ]
                     }
@@ -117,23 +117,23 @@ func setGlobalArtAmount (newAmount: Int) = {
 
 
 @Callable(i)
-func claimArtefact () = {
+func claimLootbox () = {
     let txId = tryGetString(keyTransaction(toString(i.caller)))
     let statusKey = keyStatus(toString(i.caller))
     let heightKey = keyFinishHeight(toString(i.caller))
     if((lastBlock.timestamp < getIntegerValue(timeEnd)))
     then throw("You cannot claim yet")
-    else if ((getStringValue(statusKey) != statusDrop))
-        then throw("Claimed already")
+    else if ((tryGetString(statusKey) != statusDrop))
+        then throw("You don`t have lootbox")
         else if ((getIntegerValue(heightKey) > height))
             then throw("You cannot claim yet")
             else {
                 let artType = getRandomArtefact(fromBase58String(txId), getIntegerValue(heightKey))
-                let asset = Issue(artType, "Artefact of Waves Punk metaverse", 1, 0, false, unit, getIntegerValue(heightKey))
+                let asset = Issue(artType, "Waves Punk metaverse", 1, 0, false, unit, getIntegerValue(heightKey))
                 let assetId = calculateAssetId(asset)
                 [
                 StringEntry(statusKey, artType),
-                StringEntry((toString(i.caller) + "_artefactId"), toBase58String(assetId)),
+                StringEntry((toString(i.caller) + "_assetId"), toBase58String(assetId)),
                 StringEntry((toBase58String(assetId) + "_type"), artType), 
                 asset,
                 ScriptTransfer(i.caller, 1, assetId)
