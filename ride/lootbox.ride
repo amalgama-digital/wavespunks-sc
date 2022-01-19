@@ -7,10 +7,10 @@ let artefactsLimit = 750
 let statusDrop = "DROPED"
 
 #time strat sale
-let timeStart = 1643241600000 
+let timeStart = "Time Start Drop" 
 
 #time stop sale
-let timeEnd = 1643241600000
+let timeEnd = "Time End Drop"
 
 let artefacts = ["SALE-DISCOUNT", 
                 "MERCH-TSHIRT",
@@ -66,16 +66,28 @@ func getRandomNumber (variants: Int, txId: ByteVector, finishHeight: Int, offset
 }
 
 func getRandomArtefact (boxId: ByteVector, h: Int) = {
-    let randomNumber = getRandomNumber(6, boxId, h, 0)
+    let randomNumber = getRandomNumber(15, boxId, h, 0)
     artefacts[randomNumber]
 }
 
 @Callable(i)
+func initTime ( start: Int, end: Int ) = {
+    if(i.caller == this)
+    then
+        [
+            IntegerEntry(timeStart, start),
+            IntegerEntry(timeEnd, end)
+        ]
+    else throw("Only Admin")
+}
+
+@Callable(i)
 func dropLootbox (address: String) = {
+
     let userStatusKey = keyStatus(address) 
-    if((lastBlock.timestamp > timeEnd))
+    if( lastBlock.timestamp > getIntegerValue(timeEnd) )
     then throw("Drop ended... ")
-    else if((lastBlock.timestamp < timeStart))
+    else if((lastBlock.timestamp < getIntegerValue(timeStart)))
         then throw("Drop wasn`t start... ")
         else if(i.caller != this)
             then throw("Only admin")
@@ -109,7 +121,7 @@ func claimArtefact () = {
     let txId = tryGetString(keyTransaction(toString(i.caller)))
     let statusKey = keyStatus(toString(i.caller))
     let heightKey = keyFinishHeight(toString(i.caller))
-    if((lastBlock.timestamp < timeEnd))
+    if((lastBlock.timestamp < getIntegerValue(timeEnd)))
     then throw("You cannot claim yet")
     else if ((getStringValue(statusKey) != statusDrop))
         then throw("Claimed already")
@@ -117,11 +129,11 @@ func claimArtefact () = {
             then throw("You cannot claim yet")
             else {
                 let artType = getRandomArtefact(fromBase58String(txId), getIntegerValue(heightKey))
-                let asset = Issue(artType, "Artefact of Waves Ducks metaverse.", 1, 0, false, unit, getIntegerValue(heightKey))
+                let asset = Issue(artType, "Artefact of Waves Punk metaverse", 1, 0, false, unit, getIntegerValue(heightKey))
                 let assetId = calculateAssetId(asset)
                 [
                 StringEntry(statusKey, artType),
-                StringEntry((((toString(i.caller) + "_") + txId) + "_artefactId"), toBase58String(assetId)),
+                StringEntry((toString(i.caller) + "_artefactId"), toBase58String(assetId)),
                 StringEntry((toBase58String(assetId) + "_type"), artType), 
                 asset,
                 ScriptTransfer(i.caller, 1, assetId)

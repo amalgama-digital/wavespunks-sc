@@ -1,3 +1,6 @@
+const { address } = require("@waves/ts-lib-crypto");
+const { invokeScript } = require("@waves/waves-transactions");
+
 const wvs = 10 ** 8;
 
 describe('test lootbox script', async function () {
@@ -14,9 +17,21 @@ describe('test lootbox script', async function () {
         await broadcast(ssTx);
         await waitForTx(ssTx.id)
         console.log('Script has been set')
+        const initTx = invokeScript({
+            dApp: address(accounts.deploy),
+            call: {
+                function: "initTime",
+                args: [{type: "integer", value: Date.now},
+                        {type: "integer", value: Date.now + 10000}]
+            }
+        })
+        await broadcast(initTx);
+        await waitForTx(initTx.id)
+        console.log('Init start and end time')
+
     });
     
-    it('Can deposit', async function () {
-
+    it('Drop lootbox', async function () {
+        
     })
 })
