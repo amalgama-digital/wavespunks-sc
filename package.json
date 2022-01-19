@@ -20,9 +20,9 @@
     "url": "https://github.com/amalgama-digital/wavespunks-sc/issues"
   },
   "homepage": "https://github.com/amalgama-digital/wavespunks-sc#readme",
-  "devDependencies": {
+  "dependencies": {
     "@waves/waves-transactions": "^4.1.1",
-    "axios": "^0.21.4",
-    "typescript": "^4.4.3"
+    "axios": "^0.25.0",
+    "typescript": "^4.5.4"
   }
 }

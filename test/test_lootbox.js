@@ -6,11 +6,11 @@ describe('test lootbox script', async function () {
 
     before(async function () {
         await setupAccounts(
-            {foofoofoofoofoofoofoofoofoofoofoo: 10 * wvs,
-                 barbarbarbarbarbarbarbarbarbar: 2 * wvs,
-                  wallet: 0.05 * wvs});
-        const script = compile(file('wallet.ride'));
-        const ssTx = setScript({script}, accounts.wallet);
+            {alice: 10 * wvs,
+            bob: 10 * wvs,
+            deploy: 10 * wvs});
+        const script = compile(file('lootbox.ride'));
+        const ssTx = setScript({script}, accounts.deploy);
         await broadcast(ssTx);
         await waitForTx(ssTx.id)
         console.log('Script has been set')
