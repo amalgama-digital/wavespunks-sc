@@ -86,9 +86,9 @@ func dropLootbox (address: String) = {
 
     let userStatusKey = keyStatus(address) 
     if( lastBlock.timestamp > getIntegerValue(timeEnd) )
-    then throw("Drop ended... ")
+    then throw("Drop ended...")
     else if((lastBlock.timestamp < getIntegerValue(timeStart)))
-        then throw("Drop wasn`t start... ")
+        then throw("Drop wasn`t start...")
         else if(i.caller != this)
             then throw("Only admin")
             else if ((tryGetInteger("count_lootbox") >= artefactsLimit))
@@ -124,7 +124,7 @@ func claimLootbox () = {
     if((lastBlock.timestamp < getIntegerValue(timeEnd)))
     then throw("You cannot claim yet")
     else if ((tryGetString(statusKey) != statusDrop))
-        then throw("You don`t have lootbox")
+        then throw("You dont have lootbox")
         else if ((getIntegerValue(heightKey) > height))
             then throw("You cannot claim yet")
             else {

@@ -36,40 +36,70 @@ describe('test lootbox script', async function () {
         console.log('Init start and end time')
 
     });
-    
-    it('Drop lootbox', async function () {
-        await setupAccounts({foo:10, bar: 20})
-        const initTx = invokeScript({
-            fee: 900000, 
-            dApp: address(accounts.deploy),
-            call: {
-                function: "dropLootbox",
-                args: [
-                    {
-                    type: "string",
-                    value: address(accounts.alice)
-                    }
-                ]
-            }
-        }, accounts.deploy)
-        await broadcast(initTx);
-        await waitForTx(initTx.id)
-        
+    describe('positive test', async function () {
+        it('Drop lootbox', async function () {
+            const dropTx = invokeScript({
+                fee: 900000, 
+                dApp: address(accounts.deploy),
+                call: {
+                    function: "dropLootbox",
+                    args: [
+                        {
+                        type: "string",
+                        value: address(accounts.alice)
+                        }
+                    ]
+                }
+            }, accounts.deploy)
+            await broadcast(dropTx);
+            await waitForTx(dropTx.id)
+            
+        })
+
+        it('Open lootbox', async function () {
+            await waitNBlocks(2)
+            const openTx = invokeScript({
+                dApp: address(accounts.deploy),
+                call: {
+                    function: "claimLootbox",
+                },
+            }, accounts.alice)
+            
+            await broadcast(openTx);
+            await waitForTx(openTx.id)
+        })
     })
 
-    it('Open lootbox', async function () {
-        await waitNBlocks(2)
-        const initTx = invokeScript({
-            dApp: address(accounts.deploy),
-            call: {
-                function: "claimLootbox",
-            },
-        }, accounts.alice)
-        
-        await broadcast(initTx);
-        await waitForTx(initTx.id)
-    })
+    describe('negative test', async function () {
+        it('repeated Drop lootbox', async function () {
+            const dropTx = invokeScript({
+                fee: 900000, 
+                dApp: address(accounts.deploy),
+                call: {
+                    function: "dropLootbox",
+                    args: [
+                        {
+                        type: "string",
+                        value: address(accounts.alice)
+                        }
+                    ]
+                }
+            }, accounts.deploy)
+            expect(broadcast(dropTx)).to.be.rejectedWith("Drop ended...")
+        })
 
+        it('repeated Open lootbox', async function () {
+            await waitNBlocks(2)
+            const openTx = invokeScript({
+                dApp: address(accounts.deploy),
+                call: {
+                    function: "claimLootbox",
+                },
+            }, accounts.alice)
+            
+            expect(broadcast(openTx)).to.be.rejectedWith("You dont have lootbox");
+        })
+    })
     
 
     
