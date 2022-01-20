@@ -132,10 +132,10 @@ func claimLootbox () = {
                 let asset = Issue(artType, "Waves Punk metaverse", 1, 0, false, unit, getIntegerValue(heightKey))
                 let assetId = calculateAssetId(asset)
                 [
+                asset,
                 StringEntry(statusKey, artType),
                 StringEntry((toString(i.caller) + "_assetId"), toBase58String(assetId)),
                 StringEntry((toBase58String(assetId) + "_type"), artType), 
-                asset,
                 ScriptTransfer(i.caller, 1, assetId)
                 ]
                 }

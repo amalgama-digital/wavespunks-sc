@@ -2,3 +2,4 @@ node_modules/
 src/*.js
 surfboard.config.json
 package-lock.json
+config.js
