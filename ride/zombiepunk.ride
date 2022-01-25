@@ -49,7 +49,16 @@ func getTypePunk(id: String) = {
 }
 
 func getURL(id: String) = {
-  "https://wavespunks.com/zombie/z" + id + ".png"
+  let idINT = match parseInt(id) {
+    case i:Int => i
+    case i:Unit => 0
+  }
+
+  if (idINT == 0) then {
+    "https://wavespunks.com/zombie/z" + id + ".gif"
+  } else {
+    "https://wavespunks.com/zombie/z" + id + ".png"
+  }
 }
 
 func getRandomNumber(variants: Int, txId: ByteVector, heightBlock: Int, offset: Int) = {
