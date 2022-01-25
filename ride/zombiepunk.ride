@@ -103,7 +103,7 @@ func mint(ref: String) = {
     let rand = getRandomNumber(maxSupply - totalPunksSupply, i.transactionId, height, 0)
     let punkId = getElement(listAvailablePunks, rand)
 
-    let name = "WavesZombiePunk #" + punkId
+    let name = "ZombiePunk #" + punkId
     let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\"}"
 
     let asset = Issue(name, meta, 1, 0, false, unit, height)
