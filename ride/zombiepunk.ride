@@ -41,7 +41,7 @@ func getTypePunk(id: String) = {
 
   if (idINT == 0) then {
     "ultra-rare"
-  } else if (idINT <= 40) then {
+  } else if (idINT <= 41) then {
     "rare"
   } else {
     "unique"
