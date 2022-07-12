@@ -4,6 +4,8 @@
 
 let maxSupply = 1000
 let waves = 100000000
+let owner = "3PQG1wqM5vECAGVzMDvBzyq5nSkriqnVFxs"
+# let owner = "3Msrw9Kxa6RgHYQ63sSib9uESmaBU9gH6Gy"
 
 func getPunkIDKey(id: String) = {
   "punk_" + id
@@ -51,7 +53,39 @@ func getRandomNumber(variants: Int, txId: ByteVector, heightBlock: Int, offset: 
 }
 
 func calcWavesNeeded() = {
-  waves * 5
+  waves * 6
+}
+
+@Callable(i)
+func premint(index: Int) = {
+  let totalPunksSupply = tryGetInteger("punks_supply")
+  let availablePunks = tryGetString("available_punks")
+
+  if (totalPunksSupply == maxSupply) then {
+    throw("All punks are minted")
+  } else if (availablePunks == "") then {
+    throw("No punks available")
+  } else if (toString(i.caller) != owner) then {
+    throw("The function is available only to the admin")
+  } else {
+    let listAvailablePunks = split(availablePunks, ",")
+
+    let punkId = getElement(listAvailablePunks, index)
+
+    let name = "MadPunk #" + punkId
+    let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\"}"
+
+    let asset = Issue(name, meta, 1, 0, false, unit, height)
+    let assetId = asset.calculateAssetId()
+    [
+      IntegerEntry("punks_supply", totalPunksSupply + 1),
+      StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, index), ",")),
+      asset,
+      StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
+      StringEntry(assetId.toBase58String(), getPunkIDKey(punkId)),
+      ScriptTransfer(i.caller, 1, assetId)
+    ]
+  }
 }
 
 @Callable(i)
