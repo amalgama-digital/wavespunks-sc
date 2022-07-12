@@ -2,15 +2,11 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
-let maxSupply = 3000
-let waves = 500000000
+let maxSupply = 1000
+let waves = 100000000
 
 func getPunkIDKey(id: String) = {
   "punk_" + id
-}
-
-func getReqIDKey(id: String) = {
-  "req_" + id
 }
 
 func tryGetInteger(key: String) = {
@@ -29,15 +25,6 @@ func tryGetString(key: String) = {
   val
 }
 
-func tryGetAddress(addr: String) = {
-  let val = match addressFromString(addr) {
-    case a:Address => a
-    case a:Unit => Address(base58'3Msrw9Kxa6RgHYQ63sSib9uESmaBU9gH6Gy')
-    # case a:Unit => Address(base58'3PQG1wqM5vECAGVzMDvBzyq5nSkriqnVFxs')
-  }
-  val
-}
-
 func getTypePunk(id: String) = {
   let idINT = match parseInt(id) {
     case i:Int => i
@@ -46,18 +33,33 @@ func getTypePunk(id: String) = {
 
   if (idINT == 0) then {
     "ultra-rare"
-  } else if (idINT <= 41) then {
+  } else if (idINT <= 40) then {
     "rare"
   } else {
     "unique"
   }
 }
 
-@Callable(i)
-func request() = {
-  let totalPunksSupply = tryGetInteger("punks_supply")
+func getURL(id: String) = {
+  "https://mypunks.wavespunks.com/mad/m" + id + ".png"
+}
 
-  let wavesNeeded = waves
+func getRandomNumber(variants: Int, txId: ByteVector, heightBlock: Int, offset: Int) = {
+  let randomSeedBlock = blockInfoByHeight(heightBlock-1).value()
+  let randomHash = sha256_16Kb(txId + randomSeedBlock.vrf.value())
+  randomHash.toInt(offset) % variants
+}
+
+func calcWavesNeeded() = {
+  waves * 5
+}
+
+@Callable(i)
+func mint() = {
+  let totalPunksSupply = tryGetInteger("punks_supply")
+  let availablePunks = tryGetString("available_punks")
+
+  let wavesNeeded = calcWavesNeeded()
 
   let firstPayment = i.payments[0].value()
 
@@ -68,44 +70,30 @@ func request() = {
 
   if (totalPunksSupply == maxSupply) then {
     throw("All punks are minted")
+  } else if (availablePunks == "") then {
+    throw("No punks available")
   } else if (firstPaymentBool) then {
     throw("Payment must be in Waves tokens only")
   } else if (firstPayment.amount < wavesNeeded) then {
     throw("Insufficient funds")
   } else {
-    [
-      IntegerEntry("punks_supply", totalPunksSupply + 1),
-      StringEntry(getReqIDKey(toString(totalPunksSupply)), toString(i.caller))
-    ]
-  }
-}
+    let listAvailablePunks = split(availablePunks, ",")
 
-@Callable(i)
-func mint(req: String, punkId: String, url: String) = {
-  let reqAddress = tryGetString(req)
-
-  let punk = tryGetString(getPunkIDKey(punkId))
-
-  if (punk != "") then {
-    throw("Punk was already minted")
-  } else if (reqAddress == "") then {
-    throw("No such request")
-  } else if (toString(i.caller) != "3Msrw9Kxa6RgHYQ63sSib9uESmaBU9gH6Gy") then {
-    throw("The function is available only to the admin")
-  } else {
+    let rand = getRandomNumber(maxSupply - totalPunksSupply, i.transactionId, height, 0)
+    let punkId = getElement(listAvailablePunks, rand)
 
     let name = "MadPunk #" + punkId
-    let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + url + "\"}"
+    let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\"}"
 
     let asset = Issue(name, meta, 1, 0, false, unit, height)
     let assetId = asset.calculateAssetId()
-
     [
-      DeleteEntry(req),
+      IntegerEntry("punks_supply", totalPunksSupply + 1),
+      StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
       asset,
       StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
       StringEntry(assetId.toBase58String(), getPunkIDKey(punkId)),
-      ScriptTransfer(tryGetAddress(reqAddress), 1, assetId)
+      ScriptTransfer(i.caller, 1, assetId)
     ]
   }
 }
