@@ -32,10 +32,9 @@ func getTypePunk(id: String) = {
     case i:Int => i
     case i:Unit => 0
   }
-
-  if (idINT == 0) then {
+  if(containsElement(split(tryGetString("gif_punk"), ","), toString(idINT))) then {
     "ultra-rare"
-  } else if (idINT <= 40) then {
+  } else if (idINT <= 29) then {
     "rare"
   } else {
     "unique"
@@ -73,7 +72,7 @@ func premint(index: Int) = {
     let punkId = getElement(listAvailablePunks, index)
 
     let name = "MadPunk #" + punkId
-    let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\"}"
+    let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\", \"fraction\": \"" + getURL(punkId) + "\"}"
 
     let asset = Issue(name, meta, 1, 0, false, unit, height)
     let assetId = asset.calculateAssetId()
@@ -92,7 +91,7 @@ func premint(index: Int) = {
 func mint() = {
   let totalPunksSupply = tryGetInteger("punks_supply")
   let availablePunks = tryGetString("available_punks")
-
+  let preMintAddress = tryGetString("premint_address")
   let wavesNeeded = calcWavesNeeded()
 
   let firstPayment = i.payments[0].value()
@@ -101,11 +100,34 @@ func mint() = {
     case t:ByteVector => true
     case w:Unit => false
   }
-
   if (totalPunksSupply == maxSupply) then {
     throw("All punks are minted")
   } else if (availablePunks == "") then {
     throw("No punks available")
+  } else if(containsElement(split(preMintAddress, ","), toString(i.caller))) then {
+    let listAvailablePunks = split(availablePunks, ",")
+
+    let rand = getRandomNumber(maxSupply - totalPunksSupply, i.transactionId, height, 0)
+    let punkId = getElement(listAvailablePunks, rand)
+
+    let name = "MadPunk #" + punkId
+    let meta = "Free Nomads: bounty hunters, raiders, sheriffs, tribal warriors and adrenaline junkies. Created by @WavesPunks"
+    # let meta = "Empire of Progress: crazy militarists obsessed with combat technology. Created by @WavesPunks"
+    # let meta = "Mutation Adepts: vegetarian-mutants with radioactive superpowers. Created by @WavesPunks"
+
+    let asset = Issue(name, meta, 1, 0, false, unit, height)
+    let assetId = asset.calculateAssetId()
+    [
+      IntegerEntry("punks_supply", totalPunksSupply + 1),
+      StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
+      asset,
+      StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
+      StringEntry(assetId.toBase58String() + "_id", getPunkIDKey(punkId)),
+      StringEntry(assetId.toBase58String() + "_type", getTypePunk(punkId)),
+      StringEntry(assetId.toBase58String() + "_url", getURL(punkId)),
+      StringEntry(assetId.toBase58String() + "_fraction", "Free Nomads"),
+      ScriptTransfer(i.caller, 1, assetId)
+    ]
   } else if (firstPaymentBool) then {
     throw("Payment must be in Waves tokens only")
   } else if (firstPayment.amount < wavesNeeded) then {
@@ -117,7 +139,9 @@ func mint() = {
     let punkId = getElement(listAvailablePunks, rand)
 
     let name = "MadPunk #" + punkId
-    let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\"}"
+    let meta = "Free Nomads: bounty hunters, raiders, sheriffs, tribal warriors and adrenaline junkies. Created by @WavesPunks"
+    # let meta = "Empire of Progress: crazy militarists obsessed with combat technology. Created by @WavesPunks"
+    # let meta = "Mutation Adepts: vegetarian-mutants with radioactive superpowers. Created by @WavesPunks"
 
     let asset = Issue(name, meta, 1, 0, false, unit, height)
     let assetId = asset.calculateAssetId()
@@ -126,7 +150,10 @@ func mint() = {
       StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
       asset,
       StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
-      StringEntry(assetId.toBase58String(), getPunkIDKey(punkId)),
+      StringEntry(assetId.toBase58String() + "_id", getPunkIDKey(punkId)),
+      StringEntry(assetId.toBase58String() + "_type", getTypePunk(punkId)),
+      StringEntry(assetId.toBase58String() + "_url", getURL(punkId)),
+      StringEntry(assetId.toBase58String() + "_fraction", "Free Nomads"),
       ScriptTransfer(i.caller, 1, assetId)
     ]
   }
