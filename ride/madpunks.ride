@@ -4,8 +4,6 @@
 
 let maxSupply = 1000
 let waves = 100000000
-let owner = "3PQG1wqM5vECAGVzMDvBzyq5nSkriqnVFxs"
-# let owner = "3Msrw9Kxa6RgHYQ63sSib9uESmaBU9gH6Gy"
 
 func getPunkIDKey(id: String) = {
   "punk_" + id
@@ -27,6 +25,10 @@ func tryGetString(key: String) = {
   val
 }
 
+func getURL(id: String) = {
+  "https://mypunks.wavespunks.com/mad/m" + id + ".png"
+}
+
 func getTypePunk(id: String) = {
   let idINT = match parseInt(id) {
     case i:Int => i
@@ -41,10 +43,6 @@ func getTypePunk(id: String) = {
   }
 }
 
-func getURL(id: String) = {
-  "https://mypunks.wavespunks.com/mad/m" + id + ".png"
-}
-
 func getRandomNumber(variants: Int, txId: ByteVector, heightBlock: Int, offset: Int) = {
   let randomSeedBlock = blockInfoByHeight(heightBlock-1).value()
   let randomHash = sha256_16Kb(txId + randomSeedBlock.vrf.value())
@@ -55,43 +53,39 @@ func calcWavesNeeded() = {
   waves * 6
 }
 
-@Callable(i)
-func premint(index: Int) = {
-  let totalPunksSupply = tryGetInteger("punks_supply")
-  let availablePunks = tryGetString("available_punks")
+func _mint(i: Invocation, totalPunksSupply: Int, availablePunks: String) = {
+  let listAvailablePunks = split(availablePunks, ",")
 
-  if (totalPunksSupply == maxSupply) then {
-    throw("All punks are minted")
-  } else if (availablePunks == "") then {
-    throw("No punks available")
-  } else if (toString(i.caller) != owner) then {
-    throw("The function is available only to the admin")
-  } else {
-    let listAvailablePunks = split(availablePunks, ",")
+  let rand = getRandomNumber(maxSupply - totalPunksSupply, i.transactionId, height, 0)
+  let punkId = getElement(listAvailablePunks, rand)
 
-    let punkId = getElement(listAvailablePunks, index)
+  let name = "MadPunk #" + punkId
+  let meta = "Free Nomads: bounty hunters, raiders, sheriffs, tribal warriors and adrenaline junkies. Created by @WavesPunks"
+  # let meta = "Empire of Progress: crazy militarists obsessed with combat technology. Created by @WavesPunks"
+  # let meta = "Mutation Adepts: vegetarian-mutants with radioactive superpowers. Created by @WavesPunks"
 
-    let name = "MadPunk #" + punkId
-    let meta = "{\"id\": " + punkId + ", \"type\": \"" + getTypePunk(punkId) + "\", \"url\": \"" + getURL(punkId) + "\", \"fraction\": \"" + getURL(punkId) + "\"}"
-
-    let asset = Issue(name, meta, 1, 0, false, unit, height)
-    let assetId = asset.calculateAssetId()
-    [
+  let asset = Issue(name, meta, 1, 0, false, unit, height)
+  let assetId = asset.calculateAssetId()
+  let tx = [
       IntegerEntry("punks_supply", totalPunksSupply + 1),
-      StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, index), ",")),
+      StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
       asset,
       StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
-      StringEntry(assetId.toBase58String(), getPunkIDKey(punkId)),
+      StringEntry(assetId.toBase58String() + "_id", getPunkIDKey(punkId)),
+      StringEntry(assetId.toBase58String() + "_type", getTypePunk(punkId)),
+      StringEntry(assetId.toBase58String() + "_url", getURL(punkId)),
+      StringEntry(assetId.toBase58String() + "_fraction", "Free Nomads"),
       ScriptTransfer(i.caller, 1, assetId)
     ]
-  }
+  tx
 }
 
 @Callable(i)
 func mint() = {
   let totalPunksSupply = tryGetInteger("punks_supply")
   let availablePunks = tryGetString("available_punks")
-  let preMintAddress = tryGetString("premint_address")
+  let preMintAddress = split(tryGetString("premint_address"), ",")
+  let startMint = tryGetInteger("start_mint")
   let wavesNeeded = calcWavesNeeded()
 
   let firstPayment = i.payments[0].value()
@@ -100,62 +94,26 @@ func mint() = {
     case t:ByteVector => true
     case w:Unit => false
   }
+  
   if (totalPunksSupply == maxSupply) then {
     throw("All punks are minted")
   } else if (availablePunks == "") then {
     throw("No punks available")
-  } else if(containsElement(split(preMintAddress, ","), toString(i.caller))) then {
-    let listAvailablePunks = split(availablePunks, ",")
-
-    let rand = getRandomNumber(maxSupply - totalPunksSupply, i.transactionId, height, 0)
-    let punkId = getElement(listAvailablePunks, rand)
-
-    let name = "MadPunk #" + punkId
-    let meta = "Free Nomads: bounty hunters, raiders, sheriffs, tribal warriors and adrenaline junkies. Created by @WavesPunks"
-    # let meta = "Empire of Progress: crazy militarists obsessed with combat technology. Created by @WavesPunks"
-    # let meta = "Mutation Adepts: vegetarian-mutants with radioactive superpowers. Created by @WavesPunks"
-
-    let asset = Issue(name, meta, 1, 0, false, unit, height)
-    let assetId = asset.calculateAssetId()
-    [
-      IntegerEntry("punks_supply", totalPunksSupply + 1),
-      StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
-      asset,
-      StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
-      StringEntry(assetId.toBase58String() + "_id", getPunkIDKey(punkId)),
-      StringEntry(assetId.toBase58String() + "_type", getTypePunk(punkId)),
-      StringEntry(assetId.toBase58String() + "_url", getURL(punkId)),
-      StringEntry(assetId.toBase58String() + "_fraction", "Free Nomads"),
-      ScriptTransfer(i.caller, 1, assetId)
-    ]
+  } else if(containsElement(preMintAddress, toString(i.caller))) then {
+    let index = match (indexOf(preMintAddress, toString(i.caller))) {
+      case b:Int => b
+      case b:Unit => 0
+    }
+    let temp = _mint(i, totalPunksSupply, availablePunks) ++ [StringEntry("premint_address", makeString(removeByIndex(preMintAddress, index), ","))]
+    temp
+  } else if(lastBlock.timestamp < startMint) then {
+    throw("Mint hasn`t yet begun")
   } else if (firstPaymentBool) then {
     throw("Payment must be in Waves tokens only")
   } else if (firstPayment.amount < wavesNeeded) then {
     throw("Insufficient funds")
   } else {
-    let listAvailablePunks = split(availablePunks, ",")
-
-    let rand = getRandomNumber(maxSupply - totalPunksSupply, i.transactionId, height, 0)
-    let punkId = getElement(listAvailablePunks, rand)
-
-    let name = "MadPunk #" + punkId
-    let meta = "Free Nomads: bounty hunters, raiders, sheriffs, tribal warriors and adrenaline junkies. Created by @WavesPunks"
-    # let meta = "Empire of Progress: crazy militarists obsessed with combat technology. Created by @WavesPunks"
-    # let meta = "Mutation Adepts: vegetarian-mutants with radioactive superpowers. Created by @WavesPunks"
-
-    let asset = Issue(name, meta, 1, 0, false, unit, height)
-    let assetId = asset.calculateAssetId()
-    [
-      IntegerEntry("punks_supply", totalPunksSupply + 1),
-      StringEntry("available_punks", makeString(removeByIndex(listAvailablePunks, rand), ",")),
-      asset,
-      StringEntry(getPunkIDKey(punkId), assetId.toBase58String()),
-      StringEntry(assetId.toBase58String() + "_id", getPunkIDKey(punkId)),
-      StringEntry(assetId.toBase58String() + "_type", getTypePunk(punkId)),
-      StringEntry(assetId.toBase58String() + "_url", getURL(punkId)),
-      StringEntry(assetId.toBase58String() + "_fraction", "Free Nomads"),
-      ScriptTransfer(i.caller, 1, assetId)
-    ]
+    _mint(i, totalPunksSupply, availablePunks)
   }
 }
 
