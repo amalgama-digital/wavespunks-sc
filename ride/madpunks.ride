@@ -26,7 +26,12 @@ func tryGetString(key: String) = {
 }
 
 func getURL(id: String) = {
-  "https://mypunks.wavespunks.com/mad/m" + id + ".png"
+  if(containsElement(split(tryGetString("gif_punk"), ","), id)) then {
+    "https://mypunks.wavespunks.com/mad/m" + id + ".gif"
+  } else {
+    "https://mypunks.wavespunks.com/mad/m" + id + ".png"
+
+  }
 }
 
 func getTypePunk(id: String) = {
