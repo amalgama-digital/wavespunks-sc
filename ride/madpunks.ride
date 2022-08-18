@@ -17,6 +17,14 @@ func tryGetInteger(key: String) = {
   val
 }
 
+func tryGetBoolean(key: String) = {
+  let val = match getBoolean(this, key) {
+    case b:Boolean => b
+    case _ => false
+  }
+  val
+}
+
 func tryGetString(key: String) = {
   let val = match getString(this, key) {
     case b:String => b
@@ -102,12 +110,8 @@ func mint() = {
     throw("All punks are minted")
   } else if (availablePunks == "") then {
     throw("No punks available")
-  } else if(containsElement(preMintAddress, toString(i.caller))) then {
-    let index = match (indexOf(preMintAddress, toString(i.caller))) {
-      case b:Int => b
-      case b:Unit => 0
-    }
-    let temp = _mint(i, totalPunksSupply, availablePunks) ++ [StringEntry("premint_address", makeString(removeByIndex(preMintAddress, index), ","))]
+  } else if(tryGetBoolean(toString(i.caller))) then {
+    let temp = _mint(i, totalPunksSupply, availablePunks) ++ [DeleteEntry(toString(i.caller))]
     temp
   } else if(lastBlock.timestamp < startMint) then {
     throw("Mint hasn`t yet begun")

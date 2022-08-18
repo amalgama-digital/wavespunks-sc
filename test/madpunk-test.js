@@ -12,24 +12,44 @@ describe('madpunks test', async function () {
 
     before(async function () {
 
-        for (let index = 0; index < 5; index++) {
-            await setupAccounts({temp: 10 * wvs});
-            arr.push(accounts.temp)
-            premint_address += address(accounts.temp) + ","
-        }
-
         await setupAccounts(
             {alice: 10 * wvs,
             bob: 7000 * wvs,
             deploy: 200 * wvs});
-        
-        premint_address += address(accounts.alice)        
 
+        for (let index = 0; index < 5; index++) {
+            await setupAccounts({temp: 10 * wvs});
+            arr.push(accounts.temp)
+            
+            var dataTx = data({
+                data: [{
+                    type: 'boolean',
+                    key: address(accounts.temp),
+                    value: true,
+                }],
+                fee: 1000000,
+            }, accounts.deploy);
+            await broadcast(dataTx);
+            await waitForTx(dataTx.id)
+        }
+        
         const script = compile(file('madpunks.ride'));
         const ssTx = setScript({script}, accounts.deploy);
         await broadcast(ssTx);
         await waitForTx(ssTx.id)
         console.log('Script has been set')
+
+        let discription = "Free Nomads: bounty hunters, raiders, sheriffs, tribal warriors and adrenaline junkies. Created by @WavesPunks"
+        // let discription = "Empire of Progress: crazy militarists obsessed with combat technology. Created by @WavesPunks"
+        // let discription = "Mutation Adepts: vegetarian-mutants with radioactive superpowers. Created by @WavesPunks"
+        
+        let fraction = "Free Nomads"
+        // let fraction = "Empire of Progress"
+        // let fraction = "Mutation Adepts"
+
+        let gif_punks = "5,10,19" // Free nomads
+        // let gif_punks = "0,5,22" // Empire
+        // let gif_punks = "12,18,20" // Mutation
 
         const punkSupplyTx = data({
             data: [{
@@ -55,19 +75,6 @@ describe('madpunks test', async function () {
         await waitForTx(availablePunksTx.id);
         console.log('Available punks was added')
 
-        const premintAddressTx = data({
-            data: [{
-                type: 'string',
-                key: 'premint_address',
-                value: premint_address,
-            }],
-            fee: 1000000,
-        }, accounts.deploy);
-        await broadcast(premintAddressTx);
-        await waitForTx(premintAddressTx.id)
-        console.log('Premint addresses was added')
-
-        height = await currentHeight("http://localhost:6869/");
         const startMintTx = data({
             data: [{
                 type: 'integer',
@@ -84,13 +91,30 @@ describe('madpunks test', async function () {
             data: [{
                 type: 'string',
                 key: 'gif_punk',
-                value: "0,5,22",
+                value: gif_punks,
             }],
             fee: 1000000,
         }, accounts.deploy);
         await broadcast(gifDataTx);
         await waitForTx(gifDataTx.id)
         console.log('Gif Data was added')
+
+        const descriptionTx = data({
+            data: [{
+                type: 'string',
+                key: 'collection_description',
+                value: discription
+            },
+            {   
+                type: 'string',
+                key: 'fraction',
+                value: fraction
+            }],
+            fee: 1000000,
+        }, accounts.deploy);
+        await broadcast(descriptionTx);
+        await waitForTx(descriptionTx.id)
+        console.log('Description was added')
         
     });
 
