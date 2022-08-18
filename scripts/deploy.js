@@ -19,39 +19,4 @@
     await waitForTx(ssTx.id);
     console.log(ssTx.id);
 
-    // const ownerTx = data({
-    //     data: [{
-    //         type: 'string',
-    //         key: 'owner',
-    //         value: address(dappSeed),
-    //     }],
-    //     fee: 1000000,
-    // }, dappSeed);
-    // await broadcast(ownerTx);
-    // await waitForTx(ownerTx.id)
-    // console.log('owner was added')
-
-    // const dataTx = data({
-    //     data: [{
-    //         type: 'integer',
-    //         key: 'memalien_supply',
-    //         value: 0,
-    //     }],
-    //     fee: 1000000,
-    // }, dappSeed);
-    // await broadcast(dataTx);
-    // await waitForTx(dataTx.id)
-    // console.log('total supply was added')
-
-    // const dataEndTx = data({
-    //     data: [{
-    //         type: 'integer',
-    //         key: 'end_drop',
-    //         value: 5,
-    //     }],
-    //     fee: 1000000,
-    // }, dappSeed);
-    // await broadcast(dataEndTx);
-    // await waitForTx(dataEndTx.id)
-    // console.log('End Drop was added')
 })();
